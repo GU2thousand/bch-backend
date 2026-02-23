@@ -21,6 +21,9 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    #gamification - added these two columns to test xp for user sign up
+    current_xp: int = Field(default=0)
+    current_level: int = Field(default=1)
 
 class OrganizationPrompts(SQLModel, table=True):
     __tablename__ = "organizationprompts"

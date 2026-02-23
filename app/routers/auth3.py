@@ -115,7 +115,13 @@ async def signup(user: UserCreate, session: AsyncSession = Depends(get_session))
         if not invite: raise HTTPException(400, "Invalid invite")
         if invite.expires_at < datetime.utcnow(): raise HTTPException(400, "Invite expired")
 
-    db_user = User(email=user.email, hashed_password=hash_password(user.password))
+    db_user = User(
+        email=user.email,
+        hashed_password=hash_password(user.password),
+        #gamification - user sign up logic for adding xp
+        current_xp=10,  # 10 XP on signup (gamification)
+        current_level=1,
+    )
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
