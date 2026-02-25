@@ -13,6 +13,7 @@ from app.models.model import User, Profile, OrganizationMember
 from app.services.password import hash_password, verify_password
 from app.services.auth_service import create_access_token
 from app.services.auth_service import get_current_user_optional
+from app.services.xp_service import grant_daily_login_xp
 
 router = APIRouter(prefix="/authorize", tags=["auth"])
 
@@ -121,6 +122,7 @@ async def signup(user: UserCreate, session: AsyncSession = Depends(get_session))
         #gamification - user sign up logic for adding xp
         current_xp=10,  # 10 XP on signup (gamification)
         current_level=1,
+        last_daily_reward_at=None,
     )
     session.add(db_user)
     await session.commit()
@@ -145,6 +147,10 @@ async def login(data: UserLogin, session: AsyncSession = Depends(get_session)):
 
     profile = await session.get(Profile, user.id)
     token = create_access_token({"sub": str(user.id)})
+    
+    await grant_daily_login_xp(user, session)
+    # TODO: include "daily_xp_awarded: true/false in return response for UI"
+
     return {
         "access_token": token,
         "user_id": user.id,

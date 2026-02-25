@@ -15,15 +15,21 @@ class UpdateStatusRequest(SQLModel):
     status: str
     opp_id:str
 
+class Levels(SQLModel, table=True):
+    id: int = Field(default=1, primary_key=True)
+    min_cumulative_xp: int
+    title_rank_id: Optional[int]
 
 class User(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     email: str = Field(unique=True, index=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    #gamification - added these two columns to test xp for user sign up
+    #gamification - added 4 new columns for xp gain, level up, daily reward, and login streak
     current_xp: int = Field(default=0)
-    current_level: int = Field(default=1)
+    current_level: int = Field(default=1, foreign_key="levels.id")
+    last_daily_reward_at: Optional[datetime] = None
+    #current_login_streak: int = Field(default=0)
 
 class OrganizationPrompts(SQLModel, table=True):
     __tablename__ = "organizationprompts"
