@@ -7,6 +7,7 @@ from typing import List, Optional
 from app.db import get_session
 from app.models.model import Application, InterviewSlot, Opportunity, Organization, OrganizationMember, Profile
 from app.services.auth_service import get_current_user
+from app.services.xp_service import grant_proof_of_competence_xp
 import boto3, uuid
 import os
 import re
@@ -14,8 +15,8 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 
 s3_client = boto3.client(
     "s3",
-    aws_access_key_id=os.environ["BITCOIN_AWS_ACCESS_KEY"],
-    aws_secret_access_key=os.environ["BITCOIN_AWS_SECRET_ACCESS_KEY"],
+    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
     region_name="us-east-2"
 )
 BUCKET_NAME = 'bitcoin-culture-hub-resumes'
@@ -107,6 +108,8 @@ async def upload_resume(
 
     session.add(profile)
     await session.commit()
+
+    await grant_proof_of_competence_xp(user["user_id"], session)
 
     return {
         "ok": True,

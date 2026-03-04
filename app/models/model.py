@@ -29,7 +29,7 @@ class User(SQLModel, table=True):
     current_xp: int = Field(default=0)
     current_level: int = Field(default=1, foreign_key="levels.id")
     last_daily_reward_at: Optional[datetime] = None
-    #current_login_streak: int = Field(default=0)
+    current_login_streak: int = Field(default=0)
 
 class OrganizationPrompts(SQLModel, table=True):
     __tablename__ = "organizationprompts"

@@ -1,8 +1,10 @@
-from sqlmodel import select
+from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.models.model import User, Levels
+from app.models.model import User, Levels, Organization
 from fastapi import HTTPException
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+
+ORG_CREATION_XP_CAP = 3
 
 # determines user's level based off their total xp
 async def compute_level(xp: int, session: AsyncSession) -> int:
@@ -37,20 +39,43 @@ async def grant_xp(user_id: str, amount: int, session: AsyncSession) -> User:
 
     return user
 
-# gives 10xp to users for their first login of the day
-async def grant_daily_login_xp(user: User, session: AsyncSession) -> bool:
-    current_day = date.today()
-    
-    # Sign-up scneario and then login same day and checks for previous valid login date
-    if user.last_daily_reward_at == None or user.last_daily_reward_at.date() < current_day: 
-        user.last_daily_reward_at = datetime.utcnow()
-        await grant_xp(user.id, 10, session)
-        return True
+async def grant_login_streak_xp(user: User, session: AsyncSession) -> bool:
+    today = date.today()
 
-    return False
+    if user.last_daily_reward_at is not None and user.last_daily_reward_at.date() >= today:
+        return False
 
+    yesterday = today - timedelta(days=1)
+    last_login_date = user.last_daily_reward_at.date() if user.last_daily_reward_at else None
 
-    
-    
-    
-    
+    if last_login_date == yesterday:
+        user.current_login_streak += 1
+    else:
+        user.current_login_streak = 1
+
+    user.last_daily_reward_at = datetime.utcnow()
+    await grant_xp(user.id, 5, session)
+    return True
+
+async def grant_application_xp(user_id: str, session: AsyncSession) -> None:
+    await grant_xp(user_id, 10, session)
+
+async def grant_org_creation_xp(user_id: str, session: AsyncSession) -> bool:
+    result = await session.exec(
+        select(func.count(Organization.id)).where(
+            Organization.owner_id == user_id,
+            Organization.status == "approved",
+            Organization.deleted_at.is_(None),
+        )
+    )
+    approved_count = result.one()
+
+    if approved_count > ORG_CREATION_XP_CAP:
+        return False
+
+    await grant_xp(user_id, 35, session)
+    return True
+
+# TODO: Add guradrail/cap for max of 
+async def grant_proof_of_competence_xp(user_id: str, session: AsyncSession) -> None:
+    await grant_xp(user_id, 10, session)

@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 from app.db import get_session
 from ..models.model import InterviewSlot, OpportunityCategory, Organization, OrganizationMember, OrganizationRead,Opportunity,Application, OrganizationPrompts, Profile
 from app.services.auth_service import get_current_user
+from app.services.xp_service import grant_org_creation_xp
 from pydantic import BaseModel
 from sqlalchemy import func
 
@@ -101,6 +102,7 @@ async def create_org(
     session.add(org)
     session.add(member)
     await session.commit()
+
     return org
 
 
@@ -340,6 +342,27 @@ async def archive_organization(
         "message": f"Organization {org.name} and all related data archived successfully"
     }
 
+
+
+@router.patch("/{org_id}/approve")
+async def approve_org(
+    org_id: str,
+    session: AsyncSession = Depends(get_session),
+):
+    org = await session.get(Organization, org_id)
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    if org.status == "approved":
+        raise HTTPException(status_code=400, detail="Organization is already approved")
+
+    org.status = "approved"
+    session.add(org)
+    await session.commit()
+
+    await grant_org_creation_xp(org.owner_id, session)
+
+    return {"message": f"Organization {org.name} approved"}
 
 
 @router.patch("/{org_id}/unarchive")
