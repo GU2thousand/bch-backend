@@ -8,6 +8,7 @@ import uuid
 from ..models.model import Organization, OrganizationMember, OpportunityCategory, Opportunity,Application,OpportunityRead,Tools,OutputType,Profile,UpdateStatusRequest, InterviewSlot
 from ..db import get_session
 from ..services.auth_service import get_current_user
+from ..services.xp_service import grant_application_xp
 
 BUCKET_NAME = 'bitcoin-culture-hub-resumes'
 
@@ -327,6 +328,8 @@ async def apply(
         await session.commit()
     except Exception:
         raise HTTPException(400, "Already applied")
+
+    await grant_application_xp(user["user_id"], session)
 
     return {"message": "Application submitted"}
 
