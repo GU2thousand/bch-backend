@@ -102,7 +102,6 @@ async def create_org(
     session.add(org)
     session.add(member)
     await session.commit()
-
     return org
 
 
@@ -342,8 +341,8 @@ async def archive_organization(
         "message": f"Organization {org.name} and all related data archived successfully"
     }
 
-
-
+# defined an endpoint to approve orgs for xp gain/guardrails
+# to test this, go to https://localhost8000/docs to /org/{org_id}/approve and test it out
 @router.patch("/{org_id}/approve")
 async def approve_org(
     org_id: str,

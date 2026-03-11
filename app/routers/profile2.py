@@ -89,6 +89,7 @@ async def upload_resume(
 
     content = await file.read()
 
+    #TODO: Add async thread to prevent blocking requests
     s3_client.put_object(
         Bucket=BUCKET_NAME,
         Key=file_key,
