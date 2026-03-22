@@ -8,6 +8,7 @@ from app.db import get_session
 from app.models.model import Application, InterviewSlot, Opportunity, Organization, OrganizationMember, Profile
 from app.services.auth_service import get_current_user
 from app.services.xp_service import grant_proof_of_competence_xp
+import asyncio
 import boto3, uuid
 import os
 import re
@@ -89,8 +90,8 @@ async def upload_resume(
 
     content = await file.read()
 
-    #TODO: Add async thread to prevent blocking requests
-    s3_client.put_object(
+    await asyncio.to_thread(
+        s3_client.put_object,
         Bucket=BUCKET_NAME,
         Key=file_key,
         Body=content,
