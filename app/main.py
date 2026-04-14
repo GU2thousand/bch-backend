@@ -2,13 +2,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import  health, users, explore,item,opportunity2,organization2,profile2,auth3,general_organization,events,email
+from app.routers import  health, users, explore,item,opportunity2,organization2,profile2,auth3,general_organization,events,email,marketplace_auth,marketplace_store
 from app.db import db, engine
 from sqlmodel import SQLModel
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.SKIP_SCHEMA_SYNC:
+        yield
+        return
+
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     yield
@@ -36,6 +40,8 @@ app.include_router(organization2.router)
 app.include_router(opportunity2.router)
 app.include_router(profile2.router)
 app.include_router(auth3.router)
+app.include_router(marketplace_auth.router)
+app.include_router(marketplace_store.router)
 app.include_router(general_organization.router)
 app.include_router(events.router)
 app.include_router(email.router)
